@@ -19,7 +19,7 @@ FLAGS:
   -L, --letters    letters only
   -d, --digits     digits only
   -x, --hex        hex characters only
-  -s, --symbols    lowercase + digits + symbols (default style: like acg,l.ifua43rcud4)
+  -s, --symbols    lowercase + digits + symbols 
   -f, --full       upper + lower + digits + symbols
   -h, --help       show this help
 ";
@@ -45,7 +45,7 @@ fn rand_below(urandom: &mut File, n: usize) -> usize {
 fn main() {
     let mut length = 32usize;
     let mut count = 1usize;
-    let mut charset = format!("{LOWER}{DIGITS}{SYMBOLS}");
+    let mut classes: Vec<&str> = vec![LOWER, UPPER, DIGITS, SYMBOLS];
 
     let mut args = std::env::args().skip(1);
     while let Some(arg) = args.next() {
@@ -62,12 +62,12 @@ fn main() {
                     count = n;
                 }
             }
-            "-a" | "--alnum" => charset = format!("{LOWER}{UPPER}{DIGITS}"),
-            "-L" | "--letters" => charset = format!("{LOWER}{UPPER}"),
-            "-d" | "--digits" => charset = DIGITS.to_string(),
-            "-x" | "--hex" => charset = HEX.to_string(),
-            "-s" | "--symbols" => charset = format!("{LOWER}{DIGITS}{SYMBOLS}"),
-            "-f" | "--full" => charset = format!("{LOWER}{UPPER}{DIGITS}{SYMBOLS}"),
+            "-a" | "--alnum" => classes = vec![LOWER, UPPER, DIGITS],
+            "-L" | "--letters" => classes = vec![LOWER, UPPER],
+            "-d" | "--digits" => classes = vec![DIGITS],
+            "-x" | "--hex" => classes = vec![HEX],
+            "-s" | "--symbols" => classes = vec![LOWER, DIGITS, SYMBOLS],
+            "-f" | "--full" => classes = vec![LOWER, UPPER, DIGITS, SYMBOLS],
             "-h" | "--help" => {
                 print!("{HELP}");
                 return;
@@ -76,12 +76,28 @@ fn main() {
         }
     }
 
-    let chars: Vec<char> = charset.chars().collect();
+    if length < classes.len() {
+        die(&format!("length must be at least {} for this mode", classes.len()));
+    }
+
+    let all: Vec<char> = classes.iter().flat_map(|c| c.chars()).collect();
     let mut urandom = File::open("/dev/urandom").expect("open /dev/urandom");
     for _ in 0..count {
-        let pw: String = (0..length)
-            .map(|_| chars[rand_below(&mut urandom, chars.len())])
-            .collect();
-        println!("{pw}");
+        // one char from every class guarantees each requirement is met,
+        // the rest come from the full pool, then shuffle the lot
+        let mut pw: Vec<char> = Vec::with_capacity(length);
+        if classes.len() > 1 {
+            for class in &classes {
+                let cs: Vec<char> = class.chars().collect();
+                pw.push(cs[rand_below(&mut urandom, cs.len())]);
+            }
+        }
+        while pw.len() < length {
+            pw.push(all[rand_below(&mut urandom, all.len())]);
+        }
+        for i in (1..pw.len()).rev() {
+            pw.swap(i, rand_below(&mut urandom, i + 1));
+        }
+        println!("{}", pw.into_iter().collect::<String>());
     }
 }
