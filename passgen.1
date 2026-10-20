@@ -1,0 +1,36 @@
+.TH PASSGEN 1
+.SH NAME
+passgen \- throwaway test password generator
+.SH SYNOPSIS
+.B passgen
+[\fB\-l\fR \fIN\fR] [\fB\-c\fR \fIN\fR] [\fB\-a\fR|\fB\-L\fR|\fB\-d\fR|\fB\-x\fR|\fB\-s\fR|\fB\-f\fR]
+.SH DESCRIPTION
+Prints random passwords to stdout using /dev/urandom. Meant for test data, not for real accounts.
+.SH OPTIONS
+.TP
+.BR \-l ", " \-\-length " " \fIN\fR
+Password length (default 32).
+.TP
+.BR \-c ", " \-\-count " " \fIN\fR
+Number of passwords to print (default 1).
+.TP
+.BR \-a ", " \-\-alnum
+Letters and digits.
+.TP
+.BR \-L ", " \-\-letters
+Letters only.
+.TP
+.BR \-d ", " \-\-digits
+Digits only.
+.TP
+.BR \-x ", " \-\-hex
+Hex characters only.
+.TP
+.BR \-s ", " \-\-symbols
+Lowercase, digits and symbols (default).
+.TP
+.BR \-f ", " \-\-full
+Upper, lower, digits and symbols.
+.TP
+.BR \-h ", " \-\-help
+Show help.
